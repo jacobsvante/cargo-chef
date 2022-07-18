@@ -1,7 +1,7 @@
 name: Build Docker images
 on:
   push:
-    branches: [main]
+    branches: [main, failing-build-check]
   schedule:
     - cron: '42 7 * * *' # run at 7:42 UTC (morning) every day
 
@@ -21,15 +21,7 @@ jobs:
       -
         id: set-matrix
         run: |
-          echo -n '::set-output name=matrix::[' \
-          && curl --silent https://raw.githubusercontent.com/docker-library/official-images/master/library/rust \
-            | grep -E Tags: \
-            | cut -d ' ' -f 2- \
-            | sed 's/, /\n/g' \
-            | sed 's/\(.*\)/"\1",/g' \
-            | tr '\n' ' ' \
-            | sed '$ s/..$//' \
-          && echo ']'
+          echo -n '::set-output name=matrix::["1.62.0-alpine3.16"]'
   build_and_push:
     name: Build and push
     needs: [rust_image_tag_matrix]
@@ -116,6 +108,6 @@ jobs:
             --tag $DOCKER_REPO:latest \
             --build-arg=BASE_IMAGE=rust:$RUST_IMAGE_TAG \
             --build-arg=CHEF_TAG=$CHEF_PACKAGE_VERSION \
-            --platform linux/amd64,linux/arm64 \
+            --platform linux/amd64 \
             --push \
             ./docker
